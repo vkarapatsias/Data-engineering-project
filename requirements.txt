@@ -1,0 +1,9 @@
+pylint
+flake8
+black
+pyclean
+requests
+pandas
+psycopg2-binary
+sqlalchemy
+boto3
