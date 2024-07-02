@@ -5,6 +5,7 @@ from data_fetching import fetch_airline, fetch_destination
 from config.config import SCHEMA_VERSION
 from config.logging_config import logger
 
+
 def cleanup_flight_data(flight_data: list) -> tuple[list, list]:
     """
     Method to clean up the raw data and separate departures and arrivals.
@@ -231,7 +232,9 @@ def find_busiest_facilities(
     if not df_arrivals.empty:
         # Baggage belts
         baggage_claim_lists = df_arrivals["baggageClaimBelts"].tolist()
-        all_baggage_claims = [item for sublist in baggage_claim_lists for item in sublist]
+        all_baggage_claims = [
+            item for sublist in baggage_claim_lists for item in sublist
+        ]
         baggage_claim_counts = Counter(all_baggage_claims)
         top_baggage_belts_df = pd.DataFrame(
             baggage_claim_counts.most_common(top_n), columns=["beltID", "count"]

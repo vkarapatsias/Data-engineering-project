@@ -98,9 +98,7 @@ def fetch_flights_data(window_hours=-1) -> tuple[list, str]:
 
     try:
         logger.debug("Requesting flight data...")
-        flights = api_fetcher.fetch_flights_data(
-            fromDatetime, toDatetime
-        )
+        flights = api_fetcher.fetch_flights_data(fromDatetime, toDatetime)
         logger.debug("Fetched flight data successfully.")
     except Exception as err:
         logger.error(f"Error: {err}")

@@ -71,7 +71,7 @@ class ETLController:
                     df_destinations_dep, 10
                 ),
             },
-            "facilities": find_busiest_facilities(df_arrivals, df_departures, 10)
+            "facilities": find_busiest_facilities(df_arrivals, df_departures, 10),
         }
 
         return {
@@ -109,7 +109,7 @@ class ETLController:
         Method to store the generated reports in AWS
         """
         for key, value in facilities.items():
-            a=1
+            a = 1
             store_to_s3(key, value, self.windowStr)
 
     def run_etl_process(self):

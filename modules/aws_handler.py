@@ -37,4 +37,5 @@ def store_to_s3(filePrefix: str, df: pd.DataFrame, windowStr: str):
             + S3_KEY
         )
     except Exception as e:
-        logger.error("Error uploading CSV file to S3: " + e)
+        logger.error("Error uploading CSV file to S3: " + str(e))
+        raise Exception(e)

@@ -26,6 +26,9 @@ ensure_venv:
 lint: ensure_venv install
 	$(PYTHON) -m pylint --disable=missing-module-docstring,broad-except,no-else-return,inconsistent-return-statements *.py
 	$(PYTHON) -m flake8 *.py
+	
+check_format: ensure_venv install
+	$(PYTHON) -m black --check **/*.py
 
 format: ensure_venv install
 	$(PYTHON) -m black **/*.py

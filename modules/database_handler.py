@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, text
 from config.config import DB_URI
+from config.logging_config import logger
 
 
 def get_engine():
@@ -25,5 +26,9 @@ def create_tables():
     """
     Method to create the required tables.
     """
-    engine = get_engine()
-    execute_sql_script(engine, "sql/create_tables.sql")
+    try:
+        engine = get_engine()
+        execute_sql_script(engine, "sql/create_tables.sql")
+    except Exception as exc:
+        logger.error(str(exc))
+        raise Exception(exc)
