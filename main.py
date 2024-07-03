@@ -1,13 +1,42 @@
 from flask import Flask, request, jsonify
+from flasgger import Swagger
 from modules.etl_controller import ETLController
 
 app = Flask(__name__)
+swagger = Swagger(app)
 
 
 @app.route("/extract_data", methods=["POST"])
 def data_extraction():
     """
     Data extraction endpoint
+    ---
+    tags:
+      - ETL
+    responses:
+      200:
+        description: Data extracted successfully
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: Data extracted successfully.
+            data:
+              type: array
+              items:
+                type: object
+      400:
+        description: Error occurred during data extraction
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: error
+            message:
+              type: string
+              example: Error message
     """
     try:
         etl_controller = ETLController()
@@ -30,10 +59,40 @@ def data_extraction():
 def process_data_endpoint():
     """
     Data processing and loading endpoint.
+    ---
+    tags:
+      - ETL
+    parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          type: array
+          items:
+            type: object
+    responses:
+      200:
+        description: Data processed and stored successfully
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: Data were processed and stored successfully in the provided database
+      400:
+        description: Error occurred during data processing or storing
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: error
+            message:
+              type: string
+              example: Error message
     """
     try:
         etl_controller = ETLController()
-        # Parse the JSON data from the request
         data = request.get_json()
         result = etl_controller.process_data(data)
         etl_controller.load_data(result)
@@ -54,21 +113,41 @@ def process_data_endpoint():
 @app.route("/run_pipeline", methods=["POST"])
 def run_pipeline():
     """
-    Main endpoint of app responsible for:
-        - data extraction
-        - data processing
-        - store data in db
-        - store processing results AWS
+    Run the full ETL pipeline.
+    ---
+    tags:
+      - ETL
+    responses:
+      200:
+        description: ETL process completed successfully
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: ETL process completed
     """
     etl_controller = ETLController()
     etl_controller.run_etl_process()
     return jsonify({"status": "ETL process completed"}), 200
 
 
-@app.route("/", methods=["POST"])
+@app.route("/", methods=["GET"])
 def is_online():
     """
-    Endpoint to indicate that the app is online
+    Health check endpoint.
+    ---
+    tags:
+      - Health Check
+    responses:
+      200:
+        description: App is running
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: App is running.
     """
     return jsonify({"status": "App is running."}), 200
 

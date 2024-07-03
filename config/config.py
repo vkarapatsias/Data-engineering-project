@@ -1,5 +1,5 @@
 import os
-from config.logging_config import logger
+from logging_config import logger
 
 # Schiphol Airport API credentials
 SCHIPHOL_API_APP_ID = os.getenv("SCHIPHOL_API_APP_ID")
@@ -12,7 +12,9 @@ if os.getenv("DATA_WINDOW_HOURS"):
     DATA_WINDOW_HOURS = os.getenv("DATA_WINDOW_HOURS")
 else:
     DATA_WINDOW_HOURS = 4
-    logger.warning(f"DATA_WINDOW_HOURS was set automatically to {DATA_WINDOW_HOURS}")
+    logger.warning(
+        f"DATA_WINDOW_HOURS was set automatically to {DATA_WINDOW_HOURS} hours."
+    )
     logger.warning("To configure it use the environment variable 'DATA_WINDOW_HOURS'.")
 
 

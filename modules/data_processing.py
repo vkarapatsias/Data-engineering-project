@@ -125,7 +125,19 @@ def analyse_arrivals(arrivals: list) -> tuple[pd.DataFrame, pd.DataFrame]:
             destination_data[dest] = (
                 destination_data[dest] + 1 if dest in destination_data.keys() else 1
             )
-    df_arrival_data = pd.DataFrame(arrival_data)
+    df_arrival_data = pd.DataFrame(
+        arrival_data,
+        columns=[
+            "flight_name",
+            "airline",
+            "terminal",
+            "state",
+            "estimatedLandingTime",
+            "actualLandingTime",
+            "expectedTimeOnBelt",
+            "baggageClaimBelts",
+        ],
+    )
     df_destination_data = pd.DataFrame([destination_data])
 
     return df_arrival_data, df_destination_data
@@ -165,7 +177,20 @@ def analyse_departures(departures: list) -> tuple[pd.DataFrame, pd.DataFrame]:
                 destination_data[dest] + 1 if dest in destination_data.keys() else 1
             )
 
-    df_departure_data = pd.DataFrame(departure_data)
+    df_departure_data = pd.DataFrame(
+        departure_data,
+        columns=[
+            "flight_name",
+            "airline",
+            "terminal",
+            "state",
+            "gate",
+            "expectedTimeGateOpen",
+            "expectedTimeBoarding",
+            "expectedTimeGateClosing",
+            "actualOffBlockTime",
+        ],
+    )
     df_destination_data = pd.DataFrame([destination_data])
 
     return df_departure_data, df_destination_data
@@ -223,7 +248,7 @@ def find_busiest_facilities(
     top <top_n> busiest airport facilities and most popular airlines.
     """
     top_baggage_belts_df = pd.DataFrame(columns=["beltID", "count"])
-    top_gates_df = pd.DataFrame(columns=["Gate", "count"])
+    top_gates_df = pd.DataFrame(columns=["gate", "count"])
     busiest_arr_terminals_df = pd.DataFrame(columns=["terminal", "count"])
     busiest_dep_terminals_df = pd.DataFrame(columns=["terminal", "count"])
     combined_counts_df = pd.DataFrame(columns=["airline", "count"])
@@ -231,24 +256,28 @@ def find_busiest_facilities(
     if not df_arrivals.empty:
         top_baggage_belts_df = _find_busy_baggage_belts(df_arrivals, top_n)
 
-        # Sort terminals & drop empty lines
-        busiest_arr_terminals_df = df_arrivals[df_arrivals["terminal"] != ""][
-            "terminal"
-        ].value_counts()
+        # Select top N busy arrivals' terminals
+        terminal_counts = df_arrivals["terminal"].value_counts().reset_index()
+        terminal_counts.columns = ["terminal", "count"]
+        busiest_arr_terminals_df = terminal_counts.head(top_n)
 
     if not df_departures.empty:
         # Gates
         gate_counts = df_departures["gate"].value_counts()
         top_gates_df = pd.DataFrame(
-            list(gate_counts.head(top_n).items()), columns=["Gate", "count"]
+            list(gate_counts.head(top_n).items()), columns=["gate", "count"]
         )
 
-        # Sort terminals & drop empty lines
+        # Select top N busy departures' terminals
+        terminal_counts = df_arrivals["terminal"].value_counts().reset_index()
+        terminal_counts.columns = ["terminal", "count"]
+        busiest_dep_terminals_df = terminal_counts.head(top_n)
+
         busiest_dep_terminals_df = df_departures[df_departures["terminal"] != ""][
             "terminal"
         ].value_counts()
 
-    if not df_arrivals.empty and not df_departures.empty:
+    if not df_arrivals.empty or not df_departures.empty:
         combined_counts_df = _find_busy_airlines(df_arrivals, df_departures, top_n)
 
     return {
@@ -272,6 +301,7 @@ def _find_busy_baggage_belts(df, top_n):
 
 def _find_busy_airlines(df_arrivals, df_departures, top_n):
     # Airlines & drop empty lines
+
     arrivals_counts = df_arrivals[df_arrivals["airline"] != ""][
         "airline"
     ].value_counts()
@@ -292,4 +322,4 @@ def _find_busy_airlines(df_arrivals, df_departures, top_n):
     combined_counts_df["airline"] = combined_counts_df.index.map(
         lambda x: fetch_airline(x)["publicName"]
     )
-    combined_counts_df = combined_counts_df.reset_index(drop=True)
+    return combined_counts_df.reset_index(drop=True)
