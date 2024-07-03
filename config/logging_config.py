@@ -55,10 +55,9 @@ def setup_logging(log_filename="app.log", log_level=logging.INFO):
     return logging.getLogger(__name__)
 
 
-# Initialize the logger with default configuration
-logger = setup_logging()
-
-
-# Function to get a logger for testing (separate log file)
-def setup_testing_logging():
-    return setup_logging(log_filename="app.test.log", log_level=logging.DEBUG)
+# Check the if TEST_MODE is on
+if os.getenv("TEST_MODE"):
+    logger = setup_logging(log_filename="app.test.log", log_level=logging.DEBUG)
+else:
+    # Initialize the logger with default configuration
+    logger = setup_logging()

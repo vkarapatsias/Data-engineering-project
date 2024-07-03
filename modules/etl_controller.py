@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
+import os
 from pathlib import Path
 import sys
 
@@ -20,7 +21,7 @@ from database_handler import create_tables
 from aws_handler import store_to_s3
 
 from config.logging_config import logger
-from config.config import DB_URI
+from config.config import *
 
 
 class ETLController:
@@ -29,15 +30,28 @@ class ETLController:
     """
 
     def __init__(self):
-        self.engine = create_engine(DB_URI)
-        create_tables()  # Ensure tables are created
         self.windowStr = ""
 
     def extract_data(self) -> list:
         """
         Data extraction method.
         """
-        flights, self.windowStr = fetch_flights_data()
+        # Check if ENV variables were provided
+        if SCHIPHOL_API_APP_ID is None or SCHIPHOL_API_APP_KEY is None:
+            print(os.environ)
+            errMsg = (
+                "Some of the environment variables 'SCHIPHOL_API_APP_ID' and "
+                + "'SCHIPHOL_API_APP_KEY' are not set."
+            )
+            logger.error(errMsg)
+            raise Exception(errMsg)
+        try:
+            flights, self.windowStr = fetch_flights_data()
+        except Exception as exc:
+            logger.error(f"Error fetching data {exc}")
+            return {}
+
+        logger.info(f"Successfully fetched {len(flights)} raw data entries.")
         return flights
 
     def process_data(self, raw_data: list) -> list:
@@ -48,32 +62,37 @@ class ETLController:
         df_arrivals, df_destinations_arr = analyse_arrivals(arrivals)
         df_departures, df_destinations_dep = analyse_departures(departures)
 
-        processing_results = {
-            "arrivals": {
-                "most_landed": filter_dataframe(
-                    df_arrivals, "state", "LND", "airline", 5
-                ),
-                "most_diverted": filter_dataframe(
-                    df_arrivals, "state", "DIV", "airline", 5
-                ),
-                "most_popular_destinations": find_most_popular_destinations(
-                    df_destinations_arr, 10
-                ),
-            },
-            "departures": {
-                "most_delayed": filter_dataframe(
-                    df_departures, "state", "DEL", "airline", 5
-                ),
-                "most_canceled": filter_dataframe(
-                    df_departures, "state", "CNX", "airline", 5
-                ),
-                "most_popular_destinations": find_most_popular_destinations(
-                    df_destinations_dep, 10
-                ),
-            },
-            "facilities": find_busiest_facilities(df_arrivals, df_departures, 10),
-        }
+        try:
+            processing_results = {
+                "arrivals": {
+                    "most_landed": filter_dataframe(
+                        df_arrivals, "state", "LND", "airline", 5
+                    ),
+                    "most_diverted": filter_dataframe(
+                        df_arrivals, "state", "DIV", "airline", 5
+                    ),
+                    "most_popular_destinations": find_most_popular_destinations(
+                        df_destinations_arr, 10
+                    ),
+                },
+                "departures": {
+                    "most_delayed": filter_dataframe(
+                        df_departures, "state", "DEL", "airline", 5
+                    ),
+                    "most_canceled": filter_dataframe(
+                        df_departures, "state", "CNX", "airline", 5
+                    ),
+                    "most_popular_destinations": find_most_popular_destinations(
+                        df_destinations_dep, 10
+                    ),
+                },
+                "facilities": find_busiest_facilities(df_arrivals, df_departures, 10),
+            }
+        except Exception as exc:
+            logger.error(f"Couldn't process data due to error: {exc}")
+            return {}
 
+        logger.info(f"Successfully processed data.")
         return {
             "df_arrivals": df_arrivals,
             "df_destinations_arr": df_destinations_arr,
@@ -84,8 +103,27 @@ class ETLController:
 
     def load_data(self, processed_data: list):
         """
-        Store data in databse
+        Store data in database
         """
+
+        if (
+            DB_PREFIX is None
+            or DB_IP_ADDRESS is None
+            or DB_USER is None
+            or DB_PASSWORD is None
+            or DB_NAME is None
+        ):
+            errMsg = (
+                "Some of the environment variables 'DB_PREFIX', 'DB_IP_ADDRESS',"
+                + "'DB_USER', 'DB_PASSWORD' and 'DB_NAME' are not set."
+            )
+            logger.error(errMsg)
+            raise Exception(errMsg)
+
+        # Ensure tables are created
+        self.engine = create_engine(DB_URI)
+        create_tables()
+
         names_of_tables = [
             "ARRIVALS",
             "DESTINATIONS_ARRIVALS",
@@ -108,9 +146,26 @@ class ETLController:
         """
         Method to store the generated reports in AWS
         """
-        for key, value in facilities.items():
-            a = 1
-            store_to_s3(key, value, self.windowStr)
+
+        if (
+            AWS_ACCESS_KEY_ID is None
+            or AWS_SECRET_ACCESS_KEY is None
+            or S3_BUCKET_NAME is None
+            or S3_BASE_KEY is None
+        ):
+
+            errMsg = (
+                "Some of the environment variables 'AWS_ACCESS_KEY_ID', "
+                + "'AWS_SECRET_ACCESS_KEY', 'S3_BUCKET_NAME' and 'S3_BASE_KEY' "
+                + "are not set."
+            )
+            logger.error(errMsg)
+            raise Exception(errMsg)
+
+        for key, df in facilities.items():
+            if df.empty:
+                logger.info(f"Dataframe for {key} is empty.")
+            store_to_s3(key, df, self.windowStr)
 
     def run_etl_process(self):
         """

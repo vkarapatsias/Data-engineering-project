@@ -1,9 +1,5 @@
 import unittest
-from config.logging_config import setup_testing_logging
 from modules.data_fetching import fetch_flights_data, fetch_airline, fetch_destination
-
-# Setup testing logger
-setup_testing_logging()
 
 
 class TestSchipholDataFetcher(unittest.TestCase):

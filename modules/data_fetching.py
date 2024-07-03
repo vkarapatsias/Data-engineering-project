@@ -17,28 +17,27 @@ class SchipholDataFetcher:
             "app_key": SCHIPHOL_API_APP_KEY,
             "ResourceVersion": "v4",
         }
-        self.logger = logger
 
     def _fetch_data_from_api(self, endpoint, params=None):
         url = f"{self.base_url}/{endpoint}"
         try:
             response = requests.get(url, headers=self.headers, params=params)
             if response.status_code == 204:
-                self.logger.warning(
+                logger.warning(
                     f"No content returned from {endpoint} for params {params}"
                 )
                 return None
             response.raise_for_status()
-            self.logger.debug(f"Data fetched successfully from {endpoint}")
+            logger.debug(f"Data fetched successfully from {endpoint}")
             return response.json()
         except requests.exceptions.HTTPError as errh:
-            self.logger.error(f"Http Error: {errh}")
+            logger.error(f"Http Error: {errh}")
         except requests.exceptions.ConnectionError as errc:
-            self.logger.error(f"Error Connecting: {errc}")
+            logger.error(f"Error Connecting: {errc}")
         except requests.exceptions.Timeout as errt:
-            self.logger.error(f"Timeout Error: {errt}")
+            logger.error(f"Timeout Error: {errt}")
         except requests.exceptions.RequestException as err:
-            self.logger.error(f"Error: {err}")
+            logger.error(f"Error: {err}")
         return None
 
     def _fetch_pages_iteratively(self, endpoint, params=None):

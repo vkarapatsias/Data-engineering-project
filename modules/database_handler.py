@@ -28,6 +28,8 @@ def create_tables():
     """
     try:
         engine = get_engine()
+        # Generate the required tables in the database
+        logger.info("Create required tables in the database.")
         execute_sql_script(engine, "sql/create_tables.sql")
     except Exception as exc:
         logger.error(str(exc))

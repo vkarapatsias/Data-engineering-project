@@ -180,7 +180,7 @@ def filter_dataframe(
     <filter_value>.
     """
     if df.empty:
-        logger.debug("Dataframe provided is empty. Can't proceed with analysis.")
+        logger.warning("Dataframe provided is empty. No analysis provided.")
         return df
 
     filtered_df = df[df[col_name] == filter_value]
@@ -190,10 +190,9 @@ def filter_dataframe(
 
     top_airlines = airline_counts.nlargest(top_n, "count")
 
-    for index, row in top_airlines.iterrows():
-        top_airlines.loc[index, group_by_col] = fetch_airline(row[group_by_col])[
-            "publicName"
-        ]
+    top_airlines[group_by_col] = top_airlines[group_by_col].map(
+        lambda x: fetch_airline(x)["publicName"]
+    )
     return top_airlines
 
 
@@ -209,10 +208,10 @@ def find_most_popular_destinations(df: pd.DataFrame, top_n: int) -> pd.DataFrame
     # Create a new DataFrame with columns ["col_name", "value"]
     top_dest_df = pd.DataFrame({"destination": top_columns, "flights": top_values})
 
-    for index, row in top_dest_df.iterrows():
-        top_dest_df.loc[index, "destination"] = fetch_destination(row["destination"])[
-            "city"
-        ]
+    top_dest_df["destination"] = top_dest_df["destination"].map(
+        lambda x: fetch_destination(x)["city"]
+    )
+
     return top_dest_df
 
 
@@ -230,15 +229,8 @@ def find_busiest_facilities(
     combined_counts_df = pd.DataFrame(columns=["airline", "count"])
 
     if not df_arrivals.empty:
-        # Baggage belts
-        baggage_claim_lists = df_arrivals["baggageClaimBelts"].tolist()
-        all_baggage_claims = [
-            item for sublist in baggage_claim_lists for item in sublist
-        ]
-        baggage_claim_counts = Counter(all_baggage_claims)
-        top_baggage_belts_df = pd.DataFrame(
-            baggage_claim_counts.most_common(top_n), columns=["beltID", "count"]
-        )
+        top_baggage_belts_df = _find_busy_baggage_belts(df_arrivals, top_n)
+
         # Sort terminals & drop empty lines
         busiest_arr_terminals_df = df_arrivals[df_arrivals["terminal"] != ""][
             "terminal"
@@ -257,28 +249,7 @@ def find_busiest_facilities(
         ].value_counts()
 
     if not df_arrivals.empty and not df_departures.empty:
-        # Airlines & drop empty lines
-        arrivals_counts = df_arrivals[df_arrivals["airline"] != ""][
-            "airline"
-        ].value_counts()
-        departures_counts = df_departures[df_departures["airline"] != ""][
-            "airline"
-        ].value_counts()
-
-        # Create a DataFrame to aggregate both counts
-        combined_counts_df = pd.DataFrame(
-            {
-                "count": arrivals_counts.add(
-                    departures_counts, fill_value=0
-                )  # Add counts, fill NaN with 0
-            }
-        )
-        combined_counts_df = combined_counts_df.sort_values(by="count", ascending=False)
-        combined_counts_df = combined_counts_df.head(top_n)
-        combined_counts_df["airline"] = combined_counts_df.index.map(
-            lambda x: fetch_airline(x)["publicName"]
-        )
-        combined_counts_df = combined_counts_df.reset_index(drop=True)
+        combined_counts_df = _find_busy_airlines(df_arrivals, df_departures, top_n)
 
     return {
         "busy_belts": top_baggage_belts_df,
@@ -287,3 +258,38 @@ def find_busiest_facilities(
         "busiest_departure_terminals": busiest_dep_terminals_df,
         "busiest_airlines": combined_counts_df,
     }
+
+
+def _find_busy_baggage_belts(df, top_n):
+    # Baggage belts
+    baggage_claim_lists = df["baggageClaimBelts"].tolist()
+    all_baggage_claims = [item for sublist in baggage_claim_lists for item in sublist]
+    baggage_claim_counts = Counter(all_baggage_claims)
+    return pd.DataFrame(
+        baggage_claim_counts.most_common(top_n), columns=["beltID", "count"]
+    )
+
+
+def _find_busy_airlines(df_arrivals, df_departures, top_n):
+    # Airlines & drop empty lines
+    arrivals_counts = df_arrivals[df_arrivals["airline"] != ""][
+        "airline"
+    ].value_counts()
+    departures_counts = df_departures[df_departures["airline"] != ""][
+        "airline"
+    ].value_counts()
+
+    # Create a DataFrame to aggregate both counts
+    combined_counts_df = pd.DataFrame(
+        {
+            "count": arrivals_counts.add(
+                departures_counts, fill_value=0
+            )  # Add counts, fill NaN with 0
+        }
+    )
+    combined_counts_df = combined_counts_df.sort_values(by="count", ascending=False)
+    combined_counts_df = combined_counts_df.head(top_n)
+    combined_counts_df["airline"] = combined_counts_df.index.map(
+        lambda x: fetch_airline(x)["publicName"]
+    )
+    combined_counts_df = combined_counts_df.reset_index(drop=True)

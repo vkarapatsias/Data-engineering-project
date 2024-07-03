@@ -3,6 +3,7 @@
 VENV := .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
+TEST_MODE := "on"
 
 # Helper function to activate or create and activate the virtual environment
 define ensure_venv
@@ -28,15 +29,16 @@ lint: ensure_venv install
 	$(PYTHON) -m flake8 *.py
 	
 check_format: ensure_venv install
-	$(PYTHON) -m black --check **/*.py
+	$(PYTHON) -m black --check --line-length 88  **/*.py
 
 format: ensure_venv install
-	$(PYTHON) -m black **/*.py
+	$(PYTHON) -m black --line-length 88 **/*.py *.py
 
 clean: ensure_venv install
 	$(PYTHON) -m pyclean .
 	rm -f logs/*
 
 test: ensure_venv install
+	@export TEST_MODE=$(TEST_MODE); \
 	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -m unittest discover -s tests -p 'test_*.py'
 
