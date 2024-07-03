@@ -21,11 +21,16 @@ def store_to_s3(filePrefix: str, df: pd.DataFrame, windowStr: str):
     csv_buffer.seek(0)
 
     # Configure S3 object
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    )
+    if AWS_ACCESS_KEY_ID is None:
+        # When running in AWS no access keys are required.
+        s3 = boto3.client("s3")
+    else:
+        # When running locally.
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        )
     S3_KEY = windowStr + "/" + filePrefix + S3_BASE_KEY
 
     # Upload CSV to S3 bucket

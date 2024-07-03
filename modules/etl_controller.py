@@ -38,7 +38,6 @@ class ETLController:
         """
         # Check if ENV variables were provided
         if SCHIPHOL_API_APP_ID is None or SCHIPHOL_API_APP_KEY is None:
-            print(os.environ)
             errMsg = (
                 "Some of the environment variables 'SCHIPHOL_API_APP_ID' and "
                 + "'SCHIPHOL_API_APP_KEY' are not set."
@@ -146,22 +145,6 @@ class ETLController:
         """
         Method to store the generated reports in AWS
         """
-
-        if (
-            AWS_ACCESS_KEY_ID is None
-            or AWS_SECRET_ACCESS_KEY is None
-            or S3_BUCKET_NAME is None
-            or S3_BASE_KEY is None
-        ):
-
-            errMsg = (
-                "Some of the environment variables 'AWS_ACCESS_KEY_ID', "
-                + "'AWS_SECRET_ACCESS_KEY', 'S3_BUCKET_NAME' and 'S3_BASE_KEY' "
-                + "are not set."
-            )
-            logger.error(errMsg)
-            raise Exception(errMsg)
-
         for key, df in facilities.items():
             if df.empty:
                 logger.info(f"Dataframe for {key} is empty.")

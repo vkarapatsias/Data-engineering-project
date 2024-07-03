@@ -131,16 +131,5 @@ The app can be initiated locally either by running the docker container
   <set_up_the_env_variables> make
  ```
 
-## Usage
-The app is exposed by the following endpoints, allowing access to its core functionalities:
-    - `curl -X POST http://localhost:5000/run_pipeline` that executes the whole pipeline
-    - `curl -X POST http://localhost:5000/extract_data` which only fetches raw data from the API
-    - `curl -X POST http://127.0.0.1:5000/process-and-load-data -H "Content-Type: application/json" -d @<path/to/data/file/data.json>`
-
-### Documentation
-After starting the API, its documentation is available at the [Swagger UI](http://127.0.0.1:5000/apidocs/).
-
-
-
 ### Contact
 For any questions or inquiries regarding this application, please contact me at kvassilis047@gmail.com .

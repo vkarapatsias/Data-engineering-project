@@ -1,5 +1,5 @@
 import os
-from logging_config import logger
+from config.logging_config import logger
 
 # Schiphol Airport API credentials
 SCHIPHOL_API_APP_ID = os.getenv("SCHIPHOL_API_APP_ID")
@@ -9,7 +9,9 @@ SCHIPHOL_API_APP_KEY = os.getenv("SCHIPHOL_API_APP_KEY")
 SCHEMA_VERSION = "4"
 # Window during which we fetch data, (it can also be a float e.g. 0.1 = 6 min)
 if os.getenv("DATA_WINDOW_HOURS"):
-    DATA_WINDOW_HOURS = os.getenv("DATA_WINDOW_HOURS")
+    DATA_WINDOW_HOURS = float(
+        os.getenv("DATA_WINDOW_HOURS")
+    )  # ensure this is a float number
 else:
     DATA_WINDOW_HOURS = 4
     logger.warning(
