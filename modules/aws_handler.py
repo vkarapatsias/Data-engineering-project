@@ -31,7 +31,7 @@ def store_to_s3(filePrefix: str, df: pd.DataFrame, windowStr: str):
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         )
-    S3_KEY = windowStr + "/" + filePrefix + S3_BASE_KEY
+    S3_KEY = filePrefix + "/" + windowStr + S3_BASE_KEY
 
     # Upload CSV to S3 bucket
     try:

@@ -3,7 +3,9 @@
 # Schiphol Airport ETL Tool
 
 ## Description
-The Schiphol Airport ETL Tool is designed to process and analyze airline data provided by the Schiphol Airport API. Using flight data Schiphol Airport API it provides reports for airlines, destinations, and airport's busiest facilities (gates, terminals etc). The processed results can be utilized by an application that will inform travellers about congestion in the airport and help them better plan their travel, taking into consideration how busy the terminal they depart is or estimate the waiting time after landing to the airport.
+The Schiphol Airport ETL Tool is designed to process and analyze airline data provided by the Schiphol Airport API. Using flight data from the API, the tool provides reports for airlines, destinations, and airport's busiest facilities (gates, terminals etc). The processed results can be utilized by an application that will inform travellers about congestion in the airport and help them better plan their travel, taking into consideration how busy the terminal they depart is or estimate the waiting time after landing to the airport. 
+
+The solution can be deployed locally as well as in the AWS cloud environment.
 
 ### Disclaimers
 As for now the app is compatible with data model `version 4` of Schiphol airport API.
@@ -84,10 +86,9 @@ The primary purpose of this ETL tool is to:
     DB_IP_ADDRESS=your_db_ip_address
 
     # AWS
-    AWS_ACCESS_KEY_ID=your_aws_access_key
-    AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+    AWS_ACCESS_KEY_ID=your_aws_access_key <required for local deployments>
+    AWS_SECRET_ACCESS_KEY=your_aws_secret_key <required for local deployments>
     S3_BUCKET_NAME=your_s3_bucket_name
-    S3_BASE_KEY=your_s3_base_key    
 
     # MISC
     DATA_WINDOW_HOURS=time_window_in_hours <optional>
@@ -96,40 +97,37 @@ The primary purpose of this ETL tool is to:
 4. **Docker setup**:
     Do setup the project using Docker, ensure Docker is installed in your system and run:
     ```
-    docker build -t your-dockerhub-username/etl_service:latest .
-    docker push your-dockerhub-username/etl_service:latest
+    docker build -t mpilas/etl_service:latest .
     ```
-    to build the image. to set up the containerized postgresql database. In case an external database is used, please skip this step:
+    to build the image. Next set up the containerized postgresql database. In case an external database is used, please skip this step.
     ```
     docker-compose up -d
     ```
     
 ### Execution
-#### App initiation
+#### Local deployment
 The app can be initiated locally either by running the docker container
 ```
  docker run -p 5000:5000 \
     --network=app-network \
-    -e SCHIPHOL_API_APP_ID=your_schiphol_api_app_id \
-    -e SCHIPHOL_API_APP_KEY=your_schiphol_api_app_key \
-    -e DB_USER=your_db_username \
-    -e DB_PASSWORD=your_db_password \
-    -e DB_NAME=SCHIPHOL_AIRPORT_DB \
-    -e DB_PREFIX=postgresql \
-    -e DB_IP_ADDRESS=your_db_ip_address \
-    -e AWS_ACCESS_KEY_ID=your_aws_access_key \
-    -e AWS_SECRET_ACCESS_KEY=your_aws_secret_key \
-    -e S3_BUCKET_NAME=your_s3_bucket_name \
-    -e S3_BASE_KEY=your_s3_base_key \
-    -e DATA_WINDOW_HOURS=time_window_in_hours \
+    -e <ENV_VAR>=<value> \
+    ...
+    -e <ENV_VAR>=<value> \
     etl_service
 
 ```
- or by using the makefile
+**<ENV_VAR>** are defined above. You can also use the Makefile and run:
 
  ```
   <set_up_the_env_variables> make
  ```
+
+#### AWS deployment
+
+<div style="text-align: center;">
+    <img src="assets/aws_deployment.jpg" alt="Architecture" width="80%">
+</div>
+
 
 ### Contact
 For any questions or inquiries regarding this application, please contact me at kvassilis047@gmail.com .

@@ -85,11 +85,13 @@ class ETLController:
                         df_destinations_dep, 10
                     ),
                 },
-                "facilities": find_busiest_facilities(df_arrivals, df_departures, 10),
+                "facilities": find_busiest_facilities(
+                    df_arrivals, df_departures, 10, self.windowStr
+                ),
             }
         except Exception as exc:
             logger.error(f"Couldn't process data due to error: {exc}")
-            return {}
+            raise Exception(f"Couldn't process data due to error: {exc}")
 
         logger.info(f"Successfully processed data.")
         return {
@@ -160,11 +162,14 @@ class ETLController:
         logger.info("Data processing")
         processing_results = self.process_data(raw_flights_data)
 
-        logger.info("Data storing")
-        self.load_data(processing_results)
+        if processing_results is not None:
+            logger.info("Data storing")
+            self.load_data(processing_results)
 
-        logger.info("Uploading to AWS")
-        self.aws_upload(processing_results["reports"]["facilities"])
+            logger.info("Uploading to AWS")
+            self.aws_upload(processing_results["reports"]["facilities"])
+        else:
+            logger.info("Processing failed due to error. Skipping data storing.")
 
         logger.info("Success")
 

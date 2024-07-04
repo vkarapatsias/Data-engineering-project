@@ -226,6 +226,10 @@ def find_most_popular_destinations(df: pd.DataFrame, top_n: int) -> pd.DataFrame
     Function that returns the <top_n> most popular destination cities in dataframe
     <df>, indicating the city name and the number of flights.
     """
+    if df.empty:
+        logger.warning("Dataframe provided is empty. No analysis provided.")
+        return df
+
     top_values = df.iloc[0].nlargest(top_n)
     top_columns = top_values.index.tolist()
     top_values = top_values.values.tolist()
@@ -241,25 +245,27 @@ def find_most_popular_destinations(df: pd.DataFrame, top_n: int) -> pd.DataFrame
 
 
 def find_busiest_facilities(
-    df_arrivals: pd.DataFrame, df_departures: pd.DataFrame, top_n: int
+    df_arrivals: pd.DataFrame, df_departures: pd.DataFrame, top_n: int, window: str
 ) -> dict:
     """
     A function that returns a dictionary with different information about the
-    top <top_n> busiest airport facilities and most popular airlines.
+    top <top_n> busiest airport facilities and most popular airlines during the <window>.
     """
-    top_baggage_belts_df = pd.DataFrame(columns=["beltID", "count"])
-    top_gates_df = pd.DataFrame(columns=["gate", "count"])
-    busiest_arr_terminals_df = pd.DataFrame(columns=["terminal", "count"])
-    busiest_dep_terminals_df = pd.DataFrame(columns=["terminal", "count"])
-    combined_counts_df = pd.DataFrame(columns=["airline", "count"])
+    top_baggage_belts_df = pd.DataFrame(columns=["window", "beltID", "count"])
+    top_gates_df = pd.DataFrame(columns=["window", "gate", "count"])
+    busiest_arr_terminals_df = pd.DataFrame(columns=["window", "terminal", "count"])
+    busiest_dep_terminals_df = pd.DataFrame(columns=["window", "terminal", "count"])
+    combined_counts_df = pd.DataFrame(columns=["window", "airline", "count"])
 
     if not df_arrivals.empty:
         top_baggage_belts_df = _find_busy_baggage_belts(df_arrivals, top_n)
+        top_baggage_belts_df.loc[:, "window"] = window
 
         # Select top N busy arrivals' terminals
         terminal_counts = df_arrivals["terminal"].value_counts().reset_index()
         terminal_counts.columns = ["terminal", "count"]
-        busiest_arr_terminals_df = terminal_counts.head(top_n)
+        busiest_arr_terminals_df = terminal_counts.head(top_n).copy()
+        busiest_arr_terminals_df.loc[:, "window"] = window
 
     if not df_departures.empty:
         # Gates
@@ -267,19 +273,17 @@ def find_busiest_facilities(
         top_gates_df = pd.DataFrame(
             list(gate_counts.head(top_n).items()), columns=["gate", "count"]
         )
+        top_gates_df.loc[:, "window"] = window
 
         # Select top N busy departures' terminals
         terminal_counts = df_arrivals["terminal"].value_counts().reset_index()
         terminal_counts.columns = ["terminal", "count"]
-        busiest_dep_terminals_df = terminal_counts.head(top_n)
-
-        busiest_dep_terminals_df = df_departures[df_departures["terminal"] != ""][
-            "terminal"
-        ].value_counts()
+        busiest_dep_terminals_df = terminal_counts.head(top_n).copy()
+        busiest_dep_terminals_df.loc[:, "window"] = window
 
     if not df_arrivals.empty or not df_departures.empty:
         combined_counts_df = _find_busy_airlines(df_arrivals, df_departures, top_n)
-
+        combined_counts_df.loc[:, "window"] = window
     return {
         "busy_belts": top_baggage_belts_df,
         "busy_gates": top_gates_df,
