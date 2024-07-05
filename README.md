@@ -62,7 +62,7 @@ The primary purpose of this ETL tool is to:
         └── data.json
 ```
 
-## How to run
+## How to execute
 ### Setup
 1. **Clone the repository**:
     ```bash
@@ -123,11 +123,47 @@ The app can be initiated locally either by running the docker container
  ```
 
 #### AWS deployment
+##### Architecture
 
 <div style="text-align: center;">
     <img src="assets/aws_deployment.jpg" alt="Architecture" width="80%">
 </div>
 
+##### Operational cost calculation
+The architecture was deployed in `eu-central-1` Region (Frankfurt) for reduced latency.
+- AWS Batch - Fargate:
+    - task duration: ~1minute * 24 times per day
+    - vCPU: 1
+    - memory: 2GB
+    - cost per month: 0.68136 \$/month
+- AWS Secrets Manager: 0.40\$ per secret per month, 1.6\$ per month for the 4 secrets used: DB and Schiphol API credentials. 
+- Data warehouse:
+    - Standard S3 bucket: ~0 due to small size of data files (file size 600-700 Bytes). Estimated <2.5MB per month so the cost and the monthly expenses for the bucket are 0\$.0245 per GB
+    - RDS :
+        - singleAZ
+        - no read replicas
+        - db.t4g.micro	(\$0.019/hour): 13.68\$
+        - 20GB storage (\$0.137 per GB-month): 2.74\$
+        - cost: 16.42\$/month
+- Amazon Athena: 5$ per TB of SQL query (during a month's period report files won't reach that size), assuming 100GB of SQL queries per month the cost would \$0.5
+- EventBridge: used AWS default service events which are free
 
-### Contact
+**Total costs:** 19.2 \$/month
+
+##### Development costs:
+An EC2 instance will be required to access the RDS database which will add up to the total costs, based on the instance type and the uptime.
+
+## Future improvements
+ - Features:
+    - Pair the application with a UI that can easily visualize the reports or/and the cleaned data
+ - Code:
+    - parallel processing of the data
+ - AWS:
+    - Use Terraform to manage and provision all the resources.
+    - Increase availability by deploying a multi-AZ RDS.
+    - Improve performance by adding RDS read replicas.
+    - Define a lifecycle policy on the data in the S3 bucket.
+    - Use Amazon Glue between the Amazon S3 and Amazon Athena.
+
+## Contact
 For any questions or inquiries regarding this application, please contact me at kvassilis047@gmail.com .
