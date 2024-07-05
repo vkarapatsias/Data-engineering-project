@@ -153,6 +153,12 @@ The architecture was deployed in `eu-central-1` Region (Frankfurt) for reduced l
 ##### Development costs:
 An EC2 instance will be required to access the RDS database which will add up to the total costs, based on the instance type and the uptime.
 
+#### Monitoring:
+To monitor the deployment, an interactive dashboard was created using Amazon Cloudwatch:
+<div style="text-align: center;">
+    <img src="assets/AWS-deployment-dashboard.png" alt="Architecture" width="90%">
+</div>
+
 ## Future improvements
  - Features:
     - Pair the application with a UI that can easily visualize the reports or/and the cleaned data
